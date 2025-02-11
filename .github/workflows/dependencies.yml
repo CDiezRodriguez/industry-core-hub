@@ -2,7 +2,7 @@ name: "Eclipse DASH IP Check"
 
 on:
   push:
-    branches: [main]
+    branches: [main, feat/add-Dash-License]
     paths:
       - '**.txt'
   pull_request:
