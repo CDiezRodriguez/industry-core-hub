@@ -12,7 +12,7 @@ Creative Commons Attribution 4.0 International (CC-BY-4.0) license,
 which is available at
 https://creativecommons.org/licenses/by/4.0/legalcode.
 
-SPDX-License-Identifier: CC-BY-4.0
+
 
 -->
 
@@ -40,6 +40,6 @@ See Michael Nygard's article, linked above. For a lightweight ADR toolset, see N
 
 This work is licensed under the [CC-BY-4.0](https://creativecommons.org/licenses/by/4.0/legalcode).
 
-- SPDX-License-Identifier: CC-BY-4.0
+
 - SPDX-FileCopyrightText: 2025 Contributors to the Eclipse Foundation
 - Source URL: https://github.com/eclipse-tractusx/industry-core-hub
