@@ -60,6 +60,7 @@ jobs:
           changed=$(git diff DEPENDENCIES_ICHUB-FRONTEND)
           if [[ -n "$changed" ]]; then
             echo "dependencies changed"
+            echo "$changed"  # Print the changed dependencies
             echo "changed=true" >> $GITHUB_OUTPUT
           else
             echo "dependencies not changed"
