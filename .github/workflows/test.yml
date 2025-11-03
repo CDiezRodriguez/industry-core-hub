@@ -1,0 +1,128 @@
+###############################################################
+# Copyright (c) 2025 Contributors to the Eclipse Foundation
+#
+# See the NOTICE file(s) distributed with this work for additional
+# information regarding copyright ownership.
+#
+# This program and the accompanying materials are made available under the
+# terms of the Apache License, Version 2.0 which is available at
+# https://www.apache.org/licenses/LICENSE-2.0.
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+# WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+# License for the specific language governing permissions and limitations
+# under the License.
+#
+# SPDX-License-Identifier: Apache-2.0
+###############################################################
+
+name: Unit Tests
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+    branches: ["main"]
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: '3.12'
+
+jobs:
+  backend-tests:
+    name: Backend Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+      
+    - name: Set up Python ${{ env.PYTHON_VERSION }}
+      uses: actions/setup-python@v4
+      with:
+        python-version: ${{ env.PYTHON_VERSION }}
+        
+    - name: Cache Python dependencies
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/pip
+        key: ${{ runner.os }}-pip-${{ hashFiles('ichub-backend/requirements.txt') }}
+        restore-keys: |
+          ${{ runner.os }}-pip-
+          
+    - name: Install Python dependencies
+      run: |
+        cd ichub-backend
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+        pip install pytest-cov pytest-html flake8
+        
+    - name: Verify critical imports
+      run: |
+        cd ichub-backend
+        python -c "import sys; print('Python version:', sys.version)"
+        python -c "import tractusx_sdk; print('tractusx_sdk version:', tractusx_sdk.__version__)" || echo "tractusx_sdk not available"
+        python -c "import pytest; print('pytest version:', pytest.__version__)"
+        
+    - name: Check Python syntax
+      run: |
+        cd ichub-backend
+        python -m py_compile **/*.py || true
+        
+    - name: Lint Python code
+      run: |
+        cd ichub-backend
+        python -m flake8 . --count --select=E9,F63,F7,F82 --show-source --statistics || true
+        
+    - name: Run unit tests
+      run: |
+        cd ichub-backend
+        echo "Running all unit tests..."
+        PYTHONPATH=. python -m pytest tests/ -v --tb=short --maxfail=5
+        
+    - name: Run tests with coverage
+      if: success() || failure()
+      run: |
+        cd ichub-backend
+        echo "Running all backend tests..."
+        PYTHONPATH=. python -m pytest tests/ -v --tb=short --cov=. --cov-report=xml --cov-report=html --junit-xml=test-results.xml || true
+        
+    - name: Upload coverage reports
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: backend-coverage
+        path: |
+          ichub-backend/coverage.xml
+          ichub-backend/htmlcov/
+          
+    - name: Upload test results
+      if: always()
+      uses: actions/upload-artifact@v3
+      with:
+        name: backend-test-results
+        path: ichub-backend/test-results.xml
+
+  summary:
+    name: Pipeline Summary
+    runs-on: ubuntu-latest
+    needs: [backend-tests]
+    if: always()
+    
+    steps:
+    - name: Pipeline results summary
+      run: |
+        echo "## Test Results" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "| Component | Status | Details |" >> $GITHUB_STEP_SUMMARY
+        echo "|-----------|--------|---------|" >> $GITHUB_STEP_SUMMARY
+        echo "| Backend Tests | ${{ needs.backend-tests.result }} | Unit tests, integration tests, and coverage |" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if [[ "${{ needs.backend-tests.result }}" == "success" ]]; then
+          echo "## 🎉 Overall Status: SUCCESS" >> $GITHUB_STEP_SUMMARY
+          echo "All tests passed successfully! The code is ready for review/merge." >> $GITHUB_STEP_SUMMARY
+        else
+          echo "## ⚠️ Overall Status: ATTENTION NEEDED" >> $GITHUB_STEP_SUMMARY
+          echo "Some checks failed. Please review the individual job logs for detailed information." >> $GITHUB_STEP_SUMMARY
+        fi
