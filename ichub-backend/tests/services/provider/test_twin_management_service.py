@@ -30,7 +30,10 @@ import sys
 mock_modules = [
     'tractusx_sdk',
     'tractusx_sdk.dataspace',
+    'tractusx_sdk.dataspace.managers',
+    'tractusx_sdk.dataspace.managers.connection',
     'tractusx_sdk.dataspace.services',
+    'tractusx_sdk.dataspace.services.discovery',
     'tractusx_sdk.dataspace.services.connector',
     'tractusx_sdk.dataspace.services.connector.base_edc_service',
     'tractusx_sdk.dataspace.core',
@@ -42,12 +45,16 @@ mock_modules = [
     'managers.enablement_services.submodel_service_manager',
     'managers.enablement_services.dtr_manager',
     'managers.enablement_services.connector_manager',
+    'managers.enablement_services',
+    'managers.enablement_services.provider',
+    'managers.enablement_services.consumer',
     'managers.submodels.submodel_document_generator',
     'managers.config.config_manager',
     'managers.config.log_manager',
     'managers.metadata_database.manager',
     'tools.exceptions',
     'database',
+    'connector',
 ]
 
 for module in mock_modules:
