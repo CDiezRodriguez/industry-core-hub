@@ -208,4 +208,3 @@ jobs:
         issue-number: ${{ github.event.pull_request.number }}
         body-path: ${{ steps.summary-content.outputs.summary_path }}
         edit-mode: replace
-        unique: test-report
