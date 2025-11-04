@@ -26,6 +26,10 @@ on:
     branches: ["main"]
   workflow_dispatch:
 
+permissions:
+  contents: read
+  pull-requests: write
+
 env:
   PYTHON_VERSION: '3.12'
 
@@ -111,18 +115,39 @@ jobs:
     if: always()
     
     steps:
-    - name: Pipeline results summary
+    - name: Generate summary content
+      id: summary-content
       run: |
-        echo "## Test Results" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
-        echo "| Component | Status | Details |" >> $GITHUB_STEP_SUMMARY
-        echo "|-----------|--------|---------|" >> $GITHUB_STEP_SUMMARY
-        echo "| Backend Tests | ${{ needs.backend-tests.result }} | Unit tests, integration tests, and coverage |" >> $GITHUB_STEP_SUMMARY
-        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "# 🧪 Industry Core Hub - Test Results" > summary.md
+        echo "" >> summary.md
+        echo "**Branch:** \`${{ github.ref_name }}\`" >> summary.md
+        echo "**Commit:** \`${{ github.sha }}\`" >> summary.md
+        echo "**Triggered by:** ${{ github.event_name }}" >> summary.md
+        echo "" >> summary.md
+        
+        echo "## 📊 Test Summary" >> summary.md
+        echo "" >> summary.md
+        echo "| Component | Status | Details |" >> summary.md
+        echo "|-----------|--------|---------|" >> summary.md
+        echo "| Backend Tests | ${{ needs.backend-tests.result }} | Unit tests, integration tests, and coverage |" >> summary.md
+        echo "" >> summary.md
         if [[ "${{ needs.backend-tests.result }}" == "success" ]]; then
-          echo "## 🎉 Overall Status: SUCCESS" >> $GITHUB_STEP_SUMMARY
-          echo "All tests passed successfully! The code is ready for review/merge." >> $GITHUB_STEP_SUMMARY
+          echo "## 🎉 Overall Status: SUCCESS" >> summary.md
+          echo "All tests passed successfully! The code is ready for review/merge." >> summary.md
         else
-          echo "## ⚠️ Overall Status: ATTENTION NEEDED" >> $GITHUB_STEP_SUMMARY
-          echo "Some checks failed. Please review the individual job logs for detailed information." >> $GITHUB_STEP_SUMMARY
+          echo "## ⚠️ Overall Status: ATTENTION NEEDED" >> summary.md
+          echo "Some checks failed. Please review the individual job logs for detailed information." >> summary.md
         fi
+        echo "summary_path=summary.md" >> $GITHUB_OUTPUT
+
+    - name: Write to Job Summary
+      run: cat ${{ steps.summary-content.outputs.summary_path }} >> $GITHUB_STEP_SUMMARY
+
+    - name: Post summary to Pull Request
+      if: github.event_name == 'pull_request'
+      uses: peter-evans/create-or-update-comment@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+        issue-number: ${{ github.event.pull_request.number }}
+        body-path: ${{ steps.summary-content.outputs.summary_path }}
+        edit-mode: replace
