@@ -191,6 +191,9 @@ jobs:
         echo "- **Trigger:** \`${{ github.event_name }}\`" >> summary.md
         echo "</details>" >> summary.md
 
+        echo "" >> summary.md
+        echo "<!-- test-report -->" >> summary.md
+
         echo "summary_path=summary.md" >> $GITHUB_OUTPUT
 
     - name: Write to Job Summary
@@ -204,4 +207,4 @@ jobs:
         issue-number: ${{ github.event.pull_request.number }}
         body-path: ${{ steps.summary-content.outputs.summary_path }}
         edit-mode: replace
-        id: test-report
+        unique: test-report
